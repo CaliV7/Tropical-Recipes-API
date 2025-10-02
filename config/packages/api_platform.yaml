@@ -1,5 +1,5 @@
 api_platform:
-    title: Hello API Platform
+    title: Tropical Recipes API
     version: 1.0.0
     defaults:
         stateless: true
@@ -10,3 +10,7 @@ api_platform:
             enabled: true
             items_per_page_parameter_name: 'itemsPerPage'
             page_parameter_name: 'page'
+    eager_loading:
+        max_joins: 10
+        fetch_partial: true
+        force_eager: false

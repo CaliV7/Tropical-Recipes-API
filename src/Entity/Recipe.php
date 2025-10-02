@@ -21,7 +21,11 @@ use ApiPlatform\Metadata\Delete;
     normalizationContext: ['groups' => ['recipe:read']],
     denormalizationContext: ['groups' => ['recipe:write']],
     operations: [
-        new GetCollection(),
+        new GetCollection(
+            normalizationContext: ['groups' => ['recipe:read']],
+            paginationEnabled: true,
+            paginationItemsPerPage: 20
+        ),
         new Get(),
         new Post(security: 'is_granted("ROLE_API_WRITE")'),
         new Put(security: 'is_granted("ROLE_API_WRITE")'),
@@ -51,8 +55,8 @@ class Recipe
     #[Groups(['recipe:read', 'recipe:write'])]
     private ?string $description = null;
 
-    #[ORM\OneToMany(mappedBy: 'recipe', targetEntity: RecipeIngredient::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[Groups(['recipe:read', 'recipe:write'])]
+    #[ORM\OneToMany(mappedBy: 'recipe', targetEntity: RecipeIngredient::class, cascade: ['persist', 'remove'], orphanRemoval: true, fetch: 'LAZY')]
+    #[Groups(['recipe:write'])]
     private Collection $recipeIngredients;
 
     #[ORM\Column]
@@ -63,10 +67,6 @@ class Recipe
     #[Groups(['recipe:read', 'recipe:write'])]
     private ?string $imgUrl = null;
 
-    #[ORM\Column(length: 50, nullable: true)]
-    #[Groups(['recipe:read', 'recipe:write'])]
-    private ?string $level = null;
-
     #[ORM\Column(nullable: true)]
     #[Groups(['recipe:read', 'recipe:write'])]
     private ?int $prepTime = null;
@@ -75,20 +75,16 @@ class Recipe
     #[Groups(['recipe:read', 'recipe:write'])]
     private ?int $cookTime = null;
 
-    #[ORM\Column(nullable: true)]
-    #[Groups(['recipe:read', 'recipe:write'])]
-    private ?int $cookingTime = null;
-
     #[ORM\Column(length: 20, nullable: true)]
     #[Groups(['recipe:read', 'recipe:write'])]
     private ?string $difficulty = null;
 
-    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'recipes')]
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'recipes', fetch: 'LAZY')]
     #[ORM\JoinColumn(nullable: true)]
-    #[Groups(['recipe:read', 'recipe:write'])]
+    #[Groups(['recipe:read'])]
     private ?User $user = null;
 
-    #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: 'recipes')]
+    #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: 'recipes', fetch: 'EAGER')]
     #[ORM\JoinColumn(nullable: true)]
     #[Groups(['recipe:read', 'recipe:write'])]
     private ?Category $category = null;
@@ -97,8 +93,7 @@ class Recipe
     #[Groups(['recipe:read'])]
     private ?\DateTimeInterface $createdAt = null;
 
-    #[ORM\OneToMany(mappedBy: 'recipe', targetEntity: Favorite::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[Groups(['recipe:read'])]
+    #[ORM\OneToMany(mappedBy: 'recipe', targetEntity: Favorite::class, cascade: ['persist', 'remove'], orphanRemoval: true, fetch: 'LAZY')]
     private Collection $favorites;
 
     public function getId(): ?int
@@ -185,18 +180,6 @@ class Recipe
     }
 
 
-    public function getLevel(): ?string
-    {
-        return $this->level;
-    }
-
-    public function setLevel(?string $level): static
-    {
-        $this->level = $level;
-
-        return $this;
-    }
-
     public function getPrepTime(): ?int
     {
         return $this->prepTime;
@@ -217,18 +200,6 @@ class Recipe
     public function setCookTime(?int $cookTime): static
     {
         $this->cookTime = $cookTime;
-
-        return $this;
-    }
-
-    public function getCookingTime(): ?int
-    {
-        return $this->cookingTime;
-    }
-
-    public function setCookingTime(?int $cookingTime): static
-    {
-        $this->cookingTime = $cookingTime;
 
         return $this;
     }

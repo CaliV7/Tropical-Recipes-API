@@ -26,8 +26,7 @@ class Ingredient
     #[Groups(['ingredient:read', 'ingredient:write'])]
     private ?string $name = null;
 
-    #[ORM\OneToMany(mappedBy: 'ingredient', targetEntity: RecipeIngredient::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
-    #[Groups(['ingredient:read'])]
+    #[ORM\OneToMany(mappedBy: 'ingredient', targetEntity: RecipeIngredient::class, cascade: ['persist', 'remove'], orphanRemoval: true, fetch: 'LAZY')]
     private Collection $recipeIngredients;
 
     public function __construct()

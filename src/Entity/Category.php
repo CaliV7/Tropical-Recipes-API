@@ -26,8 +26,7 @@ class Category
     #[Groups(['category:read', 'category:write'])]
     private ?string $name = null;
 
-    #[ORM\OneToMany(mappedBy: 'category', targetEntity: Recipe::class)]
-    #[Groups(['category:read'])]
+    #[ORM\OneToMany(mappedBy: 'category', targetEntity: Recipe::class, fetch: 'LAZY')]
     private Collection $recipes;
 
     public function __construct()

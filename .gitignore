@@ -15,5 +15,6 @@
 ###< lexik/jwt-authentication-bundle ###
 
 /migrations/Version*.php
+/sql/recipes-data.sql
 
 Makefile

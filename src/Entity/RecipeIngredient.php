@@ -17,13 +17,13 @@ use Symfony\Component\Serializer\Attribute\Groups;
 class RecipeIngredient
 {
     #[ORM\Id]
-    #[ORM\ManyToOne(targetEntity: Recipe::class, inversedBy: 'recipeIngredients')]
+    #[ORM\ManyToOne(targetEntity: Recipe::class, inversedBy: 'recipeIngredients', fetch: 'LAZY')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['recipe_ingredient:read', 'recipe_ingredient:write'])]
     private ?Recipe $recipe = null;
 
     #[ORM\Id]
-    #[ORM\ManyToOne(targetEntity: Ingredient::class, inversedBy: 'recipeIngredients')]
+    #[ORM\ManyToOne(targetEntity: Ingredient::class, inversedBy: 'recipeIngredients', fetch: 'EAGER')]
     #[ORM\JoinColumn(nullable: false)]
     #[Groups(['recipe_ingredient:read', 'recipe_ingredient:write'])]
     private ?Ingredient $ingredient = null;
