@@ -16,6 +16,7 @@ class UserFixtures extends Fixture
         $user->setEmail('admin@api.local');
         $user->setRoles(['ROLE_API_WRITE']);
         $user->setPassword($this->hasher->hashPassword($user, 'Secret123!'));
+        $user->setCreatedAt(new \DateTime());
 
         $manager->persist($user);
         $manager->flush();

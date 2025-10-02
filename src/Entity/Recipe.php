@@ -6,6 +6,8 @@ use ApiPlatform\Metadata\ApiResource;
 use App\Repository\RecipeRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Serializer\Attribute\Groups;
 use ApiPlatform\Metadata\GetCollection;
 use ApiPlatform\Metadata\Get;
@@ -35,6 +37,12 @@ class Recipe
     #[Groups(['recipe:read', 'recipe:write'])]
     private ?int $id = null;
 
+    public function __construct()
+    {
+        $this->recipeIngredients = new ArrayCollection();
+        $this->favorites = new ArrayCollection();
+    }
+
     #[ORM\Column(length: 255)]
     #[Groups(['recipe:read', 'recipe:write'])]
     private ?string $title = null;
@@ -43,9 +51,9 @@ class Recipe
     #[Groups(['recipe:read', 'recipe:write'])]
     private ?string $description = null;
 
-    #[ORM\Column]
+    #[ORM\OneToMany(mappedBy: 'recipe', targetEntity: RecipeIngredient::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Groups(['recipe:read', 'recipe:write'])]
-    private array $ingredients = [];
+    private Collection $recipeIngredients;
 
     #[ORM\Column]
     #[Groups(['recipe:read', 'recipe:write'])]
@@ -54,10 +62,6 @@ class Recipe
     #[ORM\Column(length: 255, nullable: true)]
     #[Groups(['recipe:read', 'recipe:write'])]
     private ?string $imgUrl = null;
-
-    #[ORM\Column(length: 100, nullable: true)]
-    #[Groups(['recipe:read', 'recipe:write'])]
-    private ?string $category = null;
 
     #[ORM\Column(length: 50, nullable: true)]
     #[Groups(['recipe:read', 'recipe:write'])]
@@ -70,6 +74,32 @@ class Recipe
     #[ORM\Column(nullable: true)]
     #[Groups(['recipe:read', 'recipe:write'])]
     private ?int $cookTime = null;
+
+    #[ORM\Column(nullable: true)]
+    #[Groups(['recipe:read', 'recipe:write'])]
+    private ?int $cookingTime = null;
+
+    #[ORM\Column(length: 20, nullable: true)]
+    #[Groups(['recipe:read', 'recipe:write'])]
+    private ?string $difficulty = null;
+
+    #[ORM\ManyToOne(targetEntity: User::class, inversedBy: 'recipes')]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['recipe:read', 'recipe:write'])]
+    private ?User $user = null;
+
+    #[ORM\ManyToOne(targetEntity: Category::class, inversedBy: 'recipes')]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['recipe:read', 'recipe:write'])]
+    private ?Category $category = null;
+
+    #[ORM\Column(type: Types::DATETIME_MUTABLE)]
+    #[Groups(['recipe:read'])]
+    private ?\DateTimeInterface $createdAt = null;
+
+    #[ORM\OneToMany(mappedBy: 'recipe', targetEntity: Favorite::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[Groups(['recipe:read'])]
+    private Collection $favorites;
 
     public function getId(): ?int
     {
@@ -100,14 +130,32 @@ class Recipe
         return $this;
     }
 
-    public function getIngredients(): array
+    /**
+     * @return Collection<int, RecipeIngredient>
+     */
+    public function getRecipeIngredients(): Collection
     {
-        return $this->ingredients;
+        return $this->recipeIngredients;
     }
 
-    public function setIngredients(array $ingredients): static
+    public function addRecipeIngredient(RecipeIngredient $recipeIngredient): static
     {
-        $this->ingredients = $ingredients;
+        if (!$this->recipeIngredients->contains($recipeIngredient)) {
+            $this->recipeIngredients->add($recipeIngredient);
+            $recipeIngredient->setRecipe($this);
+        }
+
+        return $this;
+    }
+
+    public function removeRecipeIngredient(RecipeIngredient $recipeIngredient): static
+    {
+        if ($this->recipeIngredients->removeElement($recipeIngredient)) {
+            // set the owning side to null (unless already changed)
+            if ($recipeIngredient->getRecipe() === $this) {
+                $recipeIngredient->setRecipe(null);
+            }
+        }
 
         return $this;
     }
@@ -136,17 +184,6 @@ class Recipe
         return $this;
     }
 
-    public function getCategory(): ?string
-    {
-        return $this->category;
-    }
-
-    public function setCategory(?string $category): static
-    {
-        $this->category = $category;
-
-        return $this;
-    }
 
     public function getLevel(): ?string
     {
@@ -180,6 +217,96 @@ class Recipe
     public function setCookTime(?int $cookTime): static
     {
         $this->cookTime = $cookTime;
+
+        return $this;
+    }
+
+    public function getCookingTime(): ?int
+    {
+        return $this->cookingTime;
+    }
+
+    public function setCookingTime(?int $cookingTime): static
+    {
+        $this->cookingTime = $cookingTime;
+
+        return $this;
+    }
+
+    public function getDifficulty(): ?string
+    {
+        return $this->difficulty;
+    }
+
+    public function setDifficulty(?string $difficulty): static
+    {
+        $this->difficulty = $difficulty;
+
+        return $this;
+    }
+
+    public function getUser(): ?User
+    {
+        return $this->user;
+    }
+
+    public function setUser(?User $user): static
+    {
+        $this->user = $user;
+
+        return $this;
+    }
+
+    public function getCategory(): ?Category
+    {
+        return $this->category;
+    }
+
+    public function setCategory(?Category $category): static
+    {
+        $this->category = $category;
+
+        return $this;
+    }
+
+    public function getCreatedAt(): ?\DateTimeInterface
+    {
+        return $this->createdAt;
+    }
+
+    public function setCreatedAt(\DateTimeInterface $createdAt): static
+    {
+        $this->createdAt = $createdAt;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Favorite>
+     */
+    public function getFavorites(): Collection
+    {
+        return $this->favorites;
+    }
+
+    public function addFavorite(Favorite $favorite): static
+    {
+        if (!$this->favorites->contains($favorite)) {
+            $this->favorites->add($favorite);
+            $favorite->setRecipe($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFavorite(Favorite $favorite): static
+    {
+        if ($this->favorites->removeElement($favorite)) {
+            // set the owning side to null (unless already changed)
+            if ($favorite->getRecipe() === $this) {
+                $favorite->setRecipe(null);
+            }
+        }
 
         return $this;
     }
